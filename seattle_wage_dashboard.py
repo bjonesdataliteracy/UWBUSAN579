@@ -22,36 +22,68 @@ ALL_DEPARTMENTS = sorted(df["Department"].unique())
 RATE_MIN = math.floor(df["Hourly Rate"].min())
 RATE_MAX = math.ceil(df["Hourly Rate"].max())
 
-# ── Colour palette ───────────────────────────────────────────────────────────
+# ── Colour palette — light, modern aesthetic ─────────────────────────────────
 COLORS = {
-    "bg": "#0f1117",
-    "card": "#1a1d26",
-    "border": "#2d3040",
-    "accent": "#636efa",
-    "accent2": "#00cc96",
-    "accent3": "#ef553b",
-    "text": "#e8eaed",
-    "text_dim": "#8b8fa3",
+    "bg": "#f7f8fc",
+    "card": "#ffffff",
+    "border": "#e8ecf1",
+    "accent": "#5b8def",
+    "accent2": "#43b89c",
+    "accent3": "#ef8b5e",
+    "accent4": "#a878e8",
+    "text": "#2d3748",
+    "text_dim": "#8492a6",
+    "heading": "#1a2332",
+    "shadow": "0 2px 12px rgba(0,0,0,0.06)",
+    "shadow_lg": "0 4px 24px rgba(0,0,0,0.08)",
 }
 
-PLOTLY_TEMPLATE = "plotly_dark"
+CHART_COLORS = ["#5b8def", "#43b89c", "#ef8b5e", "#a878e8", "#f06595",
+                "#fcc419", "#74c0fc", "#69db7c", "#ff8787", "#b197fc"]
+
+PLOTLY_TEMPLATE = "plotly_white"
+
+FONT_FAMILY = "'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif"
+
+# Google Fonts link for Inter
+FONT_LINK = "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+
 
 # ── Reusable style helpers ───────────────────────────────────────────────────
-def kpi_card(title, value_id):
+def kpi_card(title, value_id, accent_color):
     return html.Div(
         [
-            html.P(title, style={"margin": "0", "fontSize": "12px",
-                                  "color": COLORS["text_dim"], "textTransform": "uppercase",
-                                  "letterSpacing": "1px"}),
-            html.H2(id=value_id, style={"margin": "4px 0 0 0", "color": COLORS["text"],
-                                         "fontSize": "28px"}),
+            html.P(title, style={
+                "margin": "0", "fontSize": "11px", "fontWeight": "500",
+                "color": COLORS["text_dim"], "textTransform": "uppercase",
+                "letterSpacing": "0.8px",
+            }),
+            html.H2(id=value_id, style={
+                "margin": "6px 0 0 0", "color": COLORS["heading"],
+                "fontSize": "26px", "fontWeight": "700",
+            }),
         ],
         style={
-            "background": COLORS["card"], "borderRadius": "10px",
-            "padding": "18px 22px", "border": f"1px solid {COLORS['border']}",
-            "flex": "1", "minWidth": "160px",
+            "background": COLORS["card"], "borderRadius": "12px",
+            "padding": "20px 20px 20px 20px",
+            "boxShadow": COLORS["shadow"],
+            "flex": "1", "minWidth": "150px",
+            "position": "relative", "overflow": "hidden",
+            "borderLeft": f"4px solid {accent_color}",
         },
     )
+
+
+def chart_card_style(extra=None):
+    base = {
+        "background": COLORS["card"],
+        "borderRadius": "12px",
+        "boxShadow": COLORS["shadow"],
+        "padding": "8px",
+    }
+    if extra:
+        base.update(extra)
+    return base
 
 
 # ── Layout ───────────────────────────────────────────────────────────────────
@@ -59,29 +91,51 @@ app = Dash(__name__)
 app.title = "Seattle City Wages"
 
 app.layout = html.Div(
-    style={"background": COLORS["bg"], "minHeight": "100vh", "fontFamily": "'Segoe UI', sans-serif",
-           "color": COLORS["text"], "padding": "0"},
+    style={
+        "background": COLORS["bg"], "minHeight": "100vh",
+        "fontFamily": FONT_FAMILY, "color": COLORS["text"], "padding": "0",
+    },
     children=[
+        # Google Fonts
+        html.Link(rel="stylesheet", href=FONT_LINK),
+
         # ── Header ──
         html.Div(
-            style={"padding": "24px 36px 12px 36px",
-                    "borderBottom": f"1px solid {COLORS['border']}"},
+            style={
+                "padding": "28px 40px 20px 40px",
+                "background": COLORS["card"],
+                "boxShadow": "0 1px 8px rgba(0,0,0,0.04)",
+                "borderBottom": f"1px solid {COLORS['border']}",
+            },
             children=[
-                html.H1("City of Seattle — Employee Wage Dashboard",
-                         style={"margin": "0", "fontSize": "26px", "fontWeight": "600"}),
-                html.P("Explore hourly rates across 13,893 employees, 41 departments, and 1,178 job titles.",
-                        style={"margin": "4px 0 0 0", "color": COLORS["text_dim"], "fontSize": "14px"}),
+                html.H1("City of Seattle — Employee Wage Dashboard", style={
+                    "margin": "0", "fontSize": "24px", "fontWeight": "700",
+                    "color": COLORS["heading"], "letterSpacing": "-0.3px",
+                }),
+                html.P(
+                    "Explore hourly rates across 13,893 employees, 41 departments, and 1,178 job titles.",
+                    style={
+                        "margin": "6px 0 0 0", "color": COLORS["text_dim"],
+                        "fontSize": "14px", "fontWeight": "400",
+                    },
+                ),
             ],
         ),
 
         # ── Filters row ──
         html.Div(
-            style={"display": "flex", "gap": "24px", "padding": "20px 36px",
-                    "flexWrap": "wrap", "alignItems": "flex-end"},
+            style={
+                "display": "flex", "gap": "24px", "padding": "24px 40px 8px 40px",
+                "flexWrap": "wrap", "alignItems": "flex-end",
+            },
             children=[
                 html.Div([
-                    html.Label("Departments", style={"fontSize": "12px", "color": COLORS["text_dim"],
-                                                      "marginBottom": "4px", "display": "block"}),
+                    html.Label("Departments", style={
+                        "fontSize": "11px", "color": COLORS["text_dim"],
+                        "marginBottom": "6px", "display": "block",
+                        "fontWeight": "600", "textTransform": "uppercase",
+                        "letterSpacing": "0.5px",
+                    }),
                     dcc.Dropdown(
                         id="dept-filter",
                         options=[{"label": d, "value": d} for d in ALL_DEPARTMENTS],
@@ -93,8 +147,12 @@ app.layout = html.Div(
                 ], style={"flex": "2"}),
 
                 html.Div([
-                    html.Label("Hourly Rate Range", style={"fontSize": "12px", "color": COLORS["text_dim"],
-                                                            "marginBottom": "4px", "display": "block"}),
+                    html.Label("Hourly Rate Range", style={
+                        "fontSize": "11px", "color": COLORS["text_dim"],
+                        "marginBottom": "6px", "display": "block",
+                        "fontWeight": "600", "textTransform": "uppercase",
+                        "letterSpacing": "0.5px",
+                    }),
                     dcc.RangeSlider(
                         id="rate-slider",
                         min=RATE_MIN, max=RATE_MAX, step=1,
@@ -105,16 +163,24 @@ app.layout = html.Div(
                 ], style={"flex": "2", "minWidth": "280px"}),
 
                 html.Div([
-                    html.Label("Job Title Search", style={"fontSize": "12px", "color": COLORS["text_dim"],
-                                                           "marginBottom": "4px", "display": "block"}),
+                    html.Label("Job Title Search", style={
+                        "fontSize": "11px", "color": COLORS["text_dim"],
+                        "marginBottom": "6px", "display": "block",
+                        "fontWeight": "600", "textTransform": "uppercase",
+                        "letterSpacing": "0.5px",
+                    }),
                     dcc.Input(
                         id="title-search",
                         type="text",
                         placeholder="e.g. Engineer, Police, Librarian…",
                         debounce=True,
-                        style={"width": "100%", "padding": "8px 12px", "borderRadius": "6px",
-                               "border": f"1px solid {COLORS['border']}", "background": COLORS["card"],
-                               "color": COLORS["text"], "fontSize": "14px"},
+                        style={
+                            "width": "100%", "padding": "8px 14px",
+                            "borderRadius": "8px",
+                            "border": f"1px solid {COLORS['border']}",
+                            "background": COLORS["card"],
+                            "color": COLORS["text"], "fontSize": "14px",
+                        },
                     ),
                 ], style={"flex": "1", "minWidth": "200px"}),
             ],
@@ -123,107 +189,124 @@ app.layout = html.Div(
         # ── KPI cards ──
         html.Div(
             id="kpi-row",
-            style={"display": "flex", "gap": "16px", "padding": "4px 36px 16px 36px", "flexWrap": "wrap"},
+            style={
+                "display": "flex", "gap": "16px",
+                "padding": "20px 40px 20px 40px", "flexWrap": "wrap",
+            },
             children=[
-                kpi_card("Employees", "kpi-count"),
-                kpi_card("Departments", "kpi-depts"),
-                kpi_card("Avg Hourly Rate", "kpi-mean"),
-                kpi_card("Median Hourly Rate", "kpi-median"),
-                kpi_card("Min Rate", "kpi-min"),
-                kpi_card("Max Rate", "kpi-max"),
+                kpi_card("Employees", "kpi-count", COLORS["accent"]),
+                kpi_card("Departments", "kpi-depts", COLORS["accent4"]),
+                kpi_card("Avg Hourly Rate", "kpi-mean", COLORS["accent2"]),
+                kpi_card("Median Hourly Rate", "kpi-median", COLORS["accent3"]),
+                kpi_card("Min Rate", "kpi-min", "#74c0fc"),
+                kpi_card("Max Rate", "kpi-max", "#f06595"),
             ],
         ),
 
         # ── Charts row 1 ──
         html.Div(
-            style={"display": "flex", "gap": "20px", "padding": "0 36px 20px 36px", "flexWrap": "wrap"},
+            style={"display": "flex", "gap": "20px", "padding": "0 40px 20px 40px", "flexWrap": "wrap"},
             children=[
                 html.Div(dcc.Graph(id="chart-histogram"),
-                          style={"flex": "3", "minWidth": "400px", "background": COLORS["card"],
-                                 "borderRadius": "10px", "border": f"1px solid {COLORS['border']}"}),
+                         style=chart_card_style({"flex": "3", "minWidth": "400px"})),
                 html.Div(dcc.Graph(id="chart-salary-bands"),
-                          style={"flex": "2", "minWidth": "300px", "background": COLORS["card"],
-                                 "borderRadius": "10px", "border": f"1px solid {COLORS['border']}"}),
+                         style=chart_card_style({"flex": "2", "minWidth": "300px"})),
             ],
         ),
 
         # ── Charts row 2 ──
         html.Div(
-            style={"display": "flex", "gap": "20px", "padding": "0 36px 20px 36px", "flexWrap": "wrap"},
+            style={"display": "flex", "gap": "20px", "padding": "0 40px 20px 40px", "flexWrap": "wrap"},
             children=[
                 html.Div(dcc.Graph(id="chart-dept-bar"),
-                          style={"flex": "1", "minWidth": "400px", "background": COLORS["card"],
-                                 "borderRadius": "10px", "border": f"1px solid {COLORS['border']}"}),
+                         style=chart_card_style({"flex": "1", "minWidth": "400px"})),
                 html.Div(dcc.Graph(id="chart-dept-box"),
-                          style={"flex": "1", "minWidth": "400px", "background": COLORS["card"],
-                                 "borderRadius": "10px", "border": f"1px solid {COLORS['border']}"}),
+                         style=chart_card_style({"flex": "1", "minWidth": "400px"})),
             ],
         ),
 
         # ── Charts row 3 ──
         html.Div(
-            style={"display": "flex", "gap": "20px", "padding": "0 36px 20px 36px", "flexWrap": "wrap"},
+            style={"display": "flex", "gap": "20px", "padding": "0 40px 20px 40px", "flexWrap": "wrap"},
             children=[
                 html.Div(dcc.Graph(id="chart-top-titles"),
-                          style={"flex": "1", "minWidth": "400px", "background": COLORS["card"],
-                                 "borderRadius": "10px", "border": f"1px solid {COLORS['border']}"}),
+                         style=chart_card_style({"flex": "1", "minWidth": "400px"})),
                 html.Div(dcc.Graph(id="chart-scatter"),
-                          style={"flex": "1", "minWidth": "400px", "background": COLORS["card"],
-                                 "borderRadius": "10px", "border": f"1px solid {COLORS['border']}"}),
+                         style=chart_card_style({"flex": "1", "minWidth": "400px"})),
             ],
         ),
 
         # ── Charts row 4 ──
         html.Div(
-            style={"display": "flex", "gap": "20px", "padding": "0 36px 20px 36px", "flexWrap": "wrap"},
+            style={"display": "flex", "gap": "20px", "padding": "0 40px 20px 40px", "flexWrap": "wrap"},
             children=[
                 html.Div(dcc.Graph(id="chart-cumulative"),
-                          style={"flex": "1", "minWidth": "400px", "background": COLORS["card"],
-                                 "borderRadius": "10px", "border": f"1px solid {COLORS['border']}"}),
+                         style=chart_card_style({"flex": "1", "minWidth": "400px"})),
                 html.Div(dcc.Graph(id="chart-heatmap"),
-                          style={"flex": "1", "minWidth": "400px", "background": COLORS["card"],
-                                 "borderRadius": "10px", "border": f"1px solid {COLORS['border']}"}),
+                         style=chart_card_style({"flex": "1", "minWidth": "400px"})),
             ],
         ),
 
         # ── Data table ──
         html.Div(
-            style={"padding": "0 36px 36px 36px"},
+            style={"padding": "0 40px 40px 40px"},
             children=[
-                html.H3("Employee Data Table", style={"marginBottom": "12px", "fontWeight": "500"}),
-                dash_table.DataTable(
-                    id="data-table",
-                    columns=[
-                        {"name": "Department", "id": "Department"},
-                        {"name": "Last Name", "id": "Last Name"},
-                        {"name": "First Name", "id": "First Name"},
-                        {"name": "Job Title", "id": "Job Title"},
-                        {"name": "Hourly Rate", "id": "Hourly Rate", "type": "numeric",
-                         "format": dash_table.FormatTemplate.money(2)},
-                        {"name": "Est. Annual Salary", "id": "Annual Salary Est", "type": "numeric",
-                         "format": dash_table.FormatTemplate.money(0)},
-                    ],
-                    page_size=15,
-                    sort_action="native",
-                    sort_mode="multi",
-                    filter_action="native",
-                    style_table={"overflowX": "auto"},
-                    style_header={
-                        "backgroundColor": COLORS["card"], "color": COLORS["text"],
-                        "fontWeight": "600", "borderBottom": f"2px solid {COLORS['accent']}",
-                        "fontSize": "13px",
+                html.Div(
+                    style={
+                        "background": COLORS["card"], "borderRadius": "12px",
+                        "boxShadow": COLORS["shadow"], "padding": "24px",
                     },
-                    style_data={
-                        "backgroundColor": COLORS["bg"], "color": COLORS["text"],
-                        "borderBottom": f"1px solid {COLORS['border']}",
-                        "fontSize": "13px",
-                    },
-                    style_filter={
-                        "backgroundColor": COLORS["card"], "color": COLORS["text"],
-                    },
-                    style_data_conditional=[
-                        {"if": {"state": "active"}, "backgroundColor": COLORS["border"],
-                         "border": f"1px solid {COLORS['accent']}"},
+                    children=[
+                        html.H3("Employee Data Table", style={
+                            "marginBottom": "16px", "fontWeight": "600",
+                            "fontSize": "16px", "color": COLORS["heading"],
+                            "marginTop": "0",
+                        }),
+                        dash_table.DataTable(
+                            id="data-table",
+                            columns=[
+                                {"name": "Department", "id": "Department"},
+                                {"name": "Last Name", "id": "Last Name"},
+                                {"name": "First Name", "id": "First Name"},
+                                {"name": "Job Title", "id": "Job Title"},
+                                {"name": "Hourly Rate", "id": "Hourly Rate", "type": "numeric",
+                                 "format": dash_table.FormatTemplate.money(2)},
+                                {"name": "Est. Annual Salary", "id": "Annual Salary Est", "type": "numeric",
+                                 "format": dash_table.FormatTemplate.money(0)},
+                            ],
+                            page_size=15,
+                            sort_action="native",
+                            sort_mode="multi",
+                            filter_action="native",
+                            style_table={"overflowX": "auto"},
+                            style_header={
+                                "backgroundColor": "#f1f5f9",
+                                "color": COLORS["heading"],
+                                "fontWeight": "600",
+                                "borderBottom": f"2px solid {COLORS['accent']}",
+                                "fontSize": "12px",
+                                "textTransform": "uppercase",
+                                "letterSpacing": "0.5px",
+                                "padding": "12px 16px",
+                            },
+                            style_data={
+                                "backgroundColor": COLORS["card"],
+                                "color": COLORS["text"],
+                                "borderBottom": f"1px solid {COLORS['border']}",
+                                "fontSize": "13px",
+                                "padding": "10px 16px",
+                            },
+                            style_filter={
+                                "backgroundColor": "#f8fafc",
+                                "color": COLORS["text"],
+                                "padding": "6px 12px",
+                            },
+                            style_data_conditional=[
+                                {"if": {"row_index": "odd"}, "backgroundColor": "#fafbfd"},
+                                {"if": {"state": "active"}, "backgroundColor": "#eef2ff",
+                                 "border": f"1px solid {COLORS['accent']}"},
+                            ],
+                        ),
                     ],
                 ),
             ],
@@ -286,15 +369,19 @@ def update_dashboard(departments, rate_range, title_search):
         template=PLOTLY_TEMPLATE,
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
-        margin=dict(l=50, r=20, t=50, b=40),
-        font=dict(size=12),
+        margin=dict(l=50, r=24, t=56, b=44),
+        font=dict(family=FONT_FAMILY, size=12, color=COLORS["text"]),
+        title_font=dict(size=15, color=COLORS["heading"], family=FONT_FAMILY),
+        xaxis=dict(gridcolor="#edf2f7", zerolinecolor="#e2e8f0"),
+        yaxis=dict(gridcolor="#edf2f7", zerolinecolor="#e2e8f0"),
     )
 
     # ── 1. Histogram ──
     fig_hist = go.Figure()
     fig_hist.add_trace(go.Histogram(
         x=dff["Hourly Rate"], nbinsx=50,
-        marker_color=COLORS["accent"], opacity=0.85,
+        marker_color=COLORS["accent"], opacity=0.8,
+        marker_line=dict(width=0.5, color="white"),
         hovertemplate="$%{x:.0f}/hr<br>%{y} employees<extra></extra>",
     ))
     if n:
@@ -316,7 +403,7 @@ def update_dashboard(departments, rate_range, title_search):
         band_counts = band_col.value_counts().reindex(labels).fillna(0).astype(int)
         fig_donut = go.Figure(go.Pie(
             labels=band_counts.index, values=band_counts.values,
-            hole=0.5, marker_colors=px.colors.qualitative.Set2,
+            hole=0.55, marker_colors=CHART_COLORS[:len(labels)],
             textinfo="label+percent", textfont_size=11,
             hovertemplate="%{label}<br>%{value:,} employees (%{percent})<extra></extra>",
         ))
@@ -332,13 +419,14 @@ def update_dashboard(departments, rate_range, title_search):
     fig_dept_bar = go.Figure(go.Bar(
         y=dept_agg["Department"], x=dept_agg["Employees"],
         orientation="h", marker_color=COLORS["accent"], opacity=0.85,
+        marker_line=dict(width=0),
         customdata=dept_agg["Median Rate"],
         hovertemplate="%{y}<br>%{x:,} employees<br>Median: $%{customdata:.2f}/hr<extra></extra>",
     ))
     fig_dept_bar.update_layout(**base_layout, title="Employees per Department",
                                xaxis_title="Employees", yaxis_title="",
                                height=max(400, len(dept_agg) * 22 + 80),
-                               margin=dict(l=220, r=20, t=50, b=40))
+                               margin=dict(l=220, r=24, t=56, b=44))
 
     # ── 4. Dept box plots ──
     dept_med_order = dff.groupby("Department")["Hourly Rate"].median().sort_values().index.tolist()
@@ -347,14 +435,14 @@ def update_dashboard(departments, rate_range, title_search):
         rates = dff[dff["Department"] == dept]["Hourly Rate"]
         fig_dept_box.add_trace(go.Box(
             x=rates, y=[dept] * len(rates), name=dept,
-            orientation="h", marker_color=COLORS["accent"], opacity=0.7,
-            line_color=COLORS["accent"], boxmean=True, showlegend=False,
+            orientation="h", marker_color=COLORS["accent2"], opacity=0.7,
+            line_color=COLORS["accent2"], boxmean=True, showlegend=False,
             hovertemplate="$%{x:.2f}/hr<extra></extra>",
         ))
     fig_dept_box.update_layout(**base_layout, title="Wage Spread by Department",
                                xaxis_title="Hourly Rate ($)", yaxis_title="",
                                height=max(400, len(dept_med_order) * 22 + 80),
-                               margin=dict(l=220, r=20, t=50, b=40))
+                               margin=dict(l=220, r=24, t=56, b=44))
 
     # ── 5. Top 20 job titles ──
     if n:
@@ -365,7 +453,7 @@ def update_dashboard(departments, rate_range, title_search):
             y=top20["Job Title"], x=top20["Count"],
             orientation="h",
             marker_color=top20["Median Rate"],
-            marker_colorscale="Viridis",
+            marker_colorscale="Tealgrn",
             marker_colorbar=dict(title="Median<br>$/hr"),
             customdata=top20["Median Rate"],
             hovertemplate="%{y}<br>%{x} employees<br>Median: $%{customdata:.2f}/hr<extra></extra>",
@@ -374,7 +462,7 @@ def update_dashboard(departments, rate_range, title_search):
         fig_titles = go.Figure()
     fig_titles.update_layout(**base_layout, title="Top 20 Job Titles by Headcount (color = median pay)",
                              xaxis_title="Employees", yaxis_title="",
-                             height=550, margin=dict(l=280, r=20, t=50, b=40))
+                             height=550, margin=dict(l=280, r=24, t=56, b=44))
 
     # ── 6. Dept size vs median pay scatter ──
     if n and len(dept_agg) > 0:
@@ -382,7 +470,7 @@ def update_dashboard(departments, rate_range, title_search):
             x=dept_agg["Employees"], y=dept_agg["Median Rate"],
             mode="markers+text",
             marker=dict(size=np.sqrt(dept_agg["Employees"]) * 3,
-                        color=dept_agg["Median Rate"], colorscale="RdYlGn",
+                        color=dept_agg["Median Rate"], colorscale="Tealgrn",
                         colorbar=dict(title="Median<br>$/hr"),
                         line=dict(width=1, color="white"), opacity=0.8),
             text=[d[:20] + ".." if len(d) > 20 else d for d in dept_agg["Department"]],
@@ -402,16 +490,18 @@ def update_dashboard(departments, rate_range, title_search):
         fig_cum = go.Figure(go.Scatter(
             x=sorted_rates, y=cum_pct, mode="lines",
             fill="tozeroy", line_color=COLORS["accent"],
-            fillcolor="rgba(99,110,250,0.15)",
+            fillcolor="rgba(91,141,239,0.12)",
             hovertemplate="$%{x:.2f}/hr<br>%{y:.1f}% earn this or less<extra></extra>",
         ))
         for pct in [25, 50, 75, 90]:
             rate_at_pct = np.percentile(sorted_rates, pct)
             fig_cum.add_annotation(x=rate_at_pct, y=pct,
                                    text=f"  {pct}th: ${rate_at_pct:.0f}",
-                                   showarrow=True, arrowhead=2, arrowcolor=COLORS["text_dim"],
+                                   showarrow=True, arrowhead=2,
+                                   arrowcolor=COLORS["text_dim"],
                                    font=dict(size=10, color=COLORS["text"]),
-                                   bgcolor=COLORS["card"], bordercolor=COLORS["border"])
+                                   bgcolor=COLORS["card"],
+                                   bordercolor=COLORS["border"])
     else:
         fig_cum = go.Figure()
     fig_cum.update_layout(**base_layout, title="Cumulative Distribution of Hourly Wages",
@@ -419,7 +509,7 @@ def update_dashboard(departments, rate_range, title_search):
                           yaxis_title="Cumulative % of Employees",
                           yaxis_range=[0, 105])
 
-    # ── 8. Pay‑band heatmap by department ──
+    # ── 8. Pay-band heatmap by department ──
     if n and n_depts > 0:
         pay_bands = [0, 30, 40, 50, 60, 75, 100, 300]
         pay_labels = ["<$30", "$30-40", "$40-50", "$50-60", "$60-75", "$75-100", "$100+"]
@@ -431,7 +521,7 @@ def update_dashboard(departments, rate_range, title_search):
 
         fig_heatmap = go.Figure(go.Heatmap(
             z=cross.values, x=pay_labels, y=cross.index.tolist(),
-            colorscale="YlOrRd", hovertemplate="%{y}<br>%{x}: %{z:.1f}%<extra></extra>",
+            colorscale="Blues", hovertemplate="%{y}<br>%{x}: %{z:.1f}%<extra></extra>",
             text=np.where(cross.values >= 5, np.round(cross.values).astype(int).astype(str) + "%", ""),
             texttemplate="%{text}", textfont={"size": 10},
             colorbar=dict(title="% of Dept"),
@@ -441,7 +531,7 @@ def update_dashboard(departments, rate_range, title_search):
     fig_heatmap.update_layout(**base_layout, title="% of Department in Each Pay Band",
                               xaxis_title="Pay Band", yaxis_title="",
                               height=max(400, n_depts * 22 + 80),
-                              margin=dict(l=220, r=20, t=50, b=40))
+                              margin=dict(l=220, r=24, t=56, b=44))
 
     # ── Data table ──
     table_data = dff.to_dict("records")
