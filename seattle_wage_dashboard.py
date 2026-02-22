@@ -425,8 +425,8 @@ def update_dashboard(departments, rate_range, title_search):
     ))
     fig_dept_bar.update_layout(**base_layout, title="Employees per Department",
                                xaxis_title="Employees", yaxis_title="",
-                               height=max(400, len(dept_agg) * 22 + 80),
-                               margin=dict(l=220, r=24, t=56, b=44))
+                               height=max(400, len(dept_agg) * 22 + 80))
+    fig_dept_bar.update_layout(margin=dict(l=220, r=24, t=56, b=44))
 
     # ── 4. Dept box plots ──
     dept_med_order = dff.groupby("Department")["Hourly Rate"].median().sort_values().index.tolist()
@@ -441,8 +441,8 @@ def update_dashboard(departments, rate_range, title_search):
         ))
     fig_dept_box.update_layout(**base_layout, title="Wage Spread by Department",
                                xaxis_title="Hourly Rate ($)", yaxis_title="",
-                               height=max(400, len(dept_med_order) * 22 + 80),
-                               margin=dict(l=220, r=24, t=56, b=44))
+                               height=max(400, len(dept_med_order) * 22 + 80))
+    fig_dept_box.update_layout(margin=dict(l=220, r=24, t=56, b=44))
 
     # ── 5. Top 20 job titles ──
     if n:
@@ -462,7 +462,8 @@ def update_dashboard(departments, rate_range, title_search):
         fig_titles = go.Figure()
     fig_titles.update_layout(**base_layout, title="Top 20 Job Titles by Headcount (color = median pay)",
                              xaxis_title="Employees", yaxis_title="",
-                             height=550, margin=dict(l=280, r=24, t=56, b=44))
+                             height=550)
+    fig_titles.update_layout(margin=dict(l=280, r=24, t=56, b=44))
 
     # ── 6. Dept size vs median pay scatter ──
     if n and len(dept_agg) > 0:
@@ -530,8 +531,8 @@ def update_dashboard(departments, rate_range, title_search):
         fig_heatmap = go.Figure()
     fig_heatmap.update_layout(**base_layout, title="% of Department in Each Pay Band",
                               xaxis_title="Pay Band", yaxis_title="",
-                              height=max(400, n_depts * 22 + 80),
-                              margin=dict(l=220, r=24, t=56, b=44))
+                              height=max(400, n_depts * 22 + 80))
+    fig_heatmap.update_layout(margin=dict(l=220, r=24, t=56, b=44))
 
     # ── Data table ──
     table_data = dff.to_dict("records")
